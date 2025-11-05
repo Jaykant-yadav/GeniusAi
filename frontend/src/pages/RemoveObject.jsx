@@ -1,0 +1,11 @@
+import React from 'react'
+
+function RemoveObject() {
+  return (
+    <div>
+      <h1>Remove Object</h1>
+    </div>
+  )
+}
+
+export default RemoveObject
