@@ -1,12 +1,19 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
+  const mongoUri = process.env.MONGO_URI;
+  if (!mongoUri) {
+    console.warn("MONGO_URI is not set. Skipping database connection.");
+    return null;
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    const connection = await mongoose.connect(mongoUri);
+    console.log(`MongoDB Connected: ${connection.connection.host}`);
+    return connection;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error(`MongoDB connection error: ${error.message}`);
+    return null;
   }
 };
 
