@@ -10,9 +10,16 @@ import RemoveBackground from './pages/RemoveBackground.jsx'
 import RemoveObject from './pages/RemoveObject.jsx'
 import ReviewsResume from './pages/ReviewsResume.jsx'
 import Community from './pages/Community.jsx'
+import { useAuth } from '@clerk/clerk-react'
+import { useEffect } from 'react'
+import { Toaster } from 'react-hot-toast';
 function App() {
+
+  
+
   return (
     <div>
+      <Toaster />
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/ai' element={<Layout />}>

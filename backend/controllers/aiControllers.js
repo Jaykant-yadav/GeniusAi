@@ -4,8 +4,8 @@ import axios from 'axios';
 import Creation from '../models/Creations.js';
 import { v2 as cloudinary } from 'cloudinary';
 import FormData from 'form-data'
-import fs from fs;
-import pdf from 'pdf-parse/lib/pdf-parse.js'
+import fs from 'fs';
+// import pdf from 'pdf-parse/lib/pdf-parse.js'
 
 
 const AI = new OpenAI({
@@ -239,10 +239,10 @@ export const removeImageObject = async (req, res) => {
         }
 
         // 2 Upload to Cloudinary
-        const {public_id} = await cloudinary.uploader.upload(image.path);
+        const { public_id } = await cloudinary.uploader.upload(image.path);
 
         const imageUrl = cloudinary.url(public_id, {
-            transformation: [{effect: `gen_remove:${object}`}],
+            transformation: [{ effect: `gen_remove:${object}` }],
             resource_type: 'image'
         })
 
@@ -272,6 +272,12 @@ export const removeImageObject = async (req, res) => {
 // Review Resume
 export const resumeReview = async (req, res) => {
     try {
+        const pdfModule = await import('pdf-parse');
+        let pdf = pdfModule.default || pdfModule;
+        if (typeof pdf !== 'function') {
+            pdf = pdfModule.default?.default || pdfModule.parse || pdfModule.default?.parse;
+        }
+
         const { userId } = await req.auth();
         const resume = req.file;
         const plan = req.plan;
@@ -284,16 +290,26 @@ export const resumeReview = async (req, res) => {
             });
         }
 
-        if(resume.size > 5 * 1024 * 1024){
-            return res.json({success: false, message: "Resume file size exceeds allowed size (5MB)."})
+        if (resume.size > 5 * 1024 * 1024) {
+            return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB)." })
         }
 
         const dataBuffer = fs.readFileSync(resume.path);
-        const pdfData = await pdf(dataBuffer);
+
+        let pdfData;
+
+        if (typeof pdf === 'function') {
+            pdfData = await pdf(dataBuffer);
+        } else if (pdfModule && typeof pdfModule.PDFParse === 'function') {
+            const parser = new pdfModule.PDFParse({ data: dataBuffer });
+            pdfData = await parser.getText();
+        } else {
+            return res.json({ success: false, message: 'PDF parser not available.' });
+        }
 
         const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses, and areas for improvement. Resume Content:\n\n${pdfData.text}`
 
-         const response = await AI.chat.completions.create({
+        const response = await AI.chat.completions.create({
             model: "gemini-2.0-flash",
             messages: [
                 {
@@ -328,3 +344,4 @@ export const resumeReview = async (req, res) => {
         });
     }
 }
+
