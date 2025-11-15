@@ -9,7 +9,15 @@ function CreationItem({ item }) {
             <div className='flex justify-between items-center gap-4'>
                 <div>
                     <h2>{item.prompt}</h2>
-                    <p className='text-gray-500'>{item.type} - {new Date(item.created_at).toLocaleDateString()}</p>
+                    <p className='text-gray-500'>
+                        {item.type} - {
+                            (() => {
+                                const dateValue = item.createdAt || item.created_at || item.created || item.date;
+                                const d = dateValue ? new Date(dateValue) : null;
+                                return d && !isNaN(d.getTime()) ? d.toLocaleDateString() : 'Unknown date';
+                            })()
+                        }
+                    </p>
                 </div>
                 <button className='bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-4 py-1 rounded-full'>{item.type}</button>
             </div>

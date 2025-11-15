@@ -1,5 +1,10 @@
 import { Sparkles, Image, Hash } from 'lucide-react';
-import React, {useState} from 'react'
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
+
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 function GenerateImages() {
   const ImageStyle = [
@@ -9,9 +14,29 @@ function GenerateImages() {
   const [selectedStyle, setSelectedStyle] = useState('Realistic')
   const [input, setInput] = useState('');
   const [publish, setPublish] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState('');
+
+  const { getToken } = useAuth();
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    try {
+      setLoading(true)
+
+      const prompt = `Generate an image of ${input} in the style ${selectedStyle}`
+
+      const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, { headers: { Authorization: `Bearer ${await getToken()}` } })
+
+      if (data.success) {
+        setContent(data.content)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+    setLoading(false)
   }
 
   return (
@@ -35,17 +60,17 @@ function GenerateImages() {
         </div>
 
         <div className='my-6 flex items-center gap-2'>
-            <label className='relative cursor-pointer'>
-              <input type="checkbox" onChange={(e)=>setPublish(e.target.checked)} checked={publish} className='sr-only peer'/>
-              <div className='w-9 h-5 bg-slate-300 rounded-full peer-checked:bg-green-500 transition-colors duration-200'></div>
-              <span className='absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 transform peer-checked:translate-x-4'></span>
-            </label>
-            <p className='text-sm'>Make this image Public</p>
+          <label className='relative cursor-pointer'>
+            <input type="checkbox" onChange={(e) => setPublish(e.target.checked)} checked={publish} className='sr-only peer' />
+            <div className='w-9 h-5 bg-slate-300 rounded-full peer-checked:bg-green-500 transition-colors duration-200'></div>
+            <span className='absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 transform peer-checked:translate-x-4'></span>
+          </label>
+          <p className='text-sm'>Make this image Public</p>
         </div>
 
         <br />
-        <button className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#00AD25] to-[#04FF50] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer'>
-          <Image className='w-5' />
+        <button disabled={loading} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#00AD25] to-[#04FF50] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer'>
+          {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <Image className='w-5' />}
           Generate Image
         </button>
       </form>
@@ -55,12 +80,20 @@ function GenerateImages() {
           <Image className='w-5 h-5 text-[#00AD25]' />
           <h1 className='text-xl font-semibold'>Generated Image</h1>
         </div>
-        <div className='flex-1 flex justify-center items-center'>
-          <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
-            <Image className='w-9 h-9' />
-            <p>Enter a topic and click "Generate image" to get started</p>
+        {!content ? (
+          <div className='flex-1 flex justify-center items-center'>
+            <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
+              <Image className='w-9 h-9' />
+              <p>Enter a topic and click "Generate image" to get started</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className='mt-3 h-full'>
+            <img src={content} alt='image' className='w-full h-full'/>
+          </div>
+        )
+        }
+
       </div>
     </div>
   )
