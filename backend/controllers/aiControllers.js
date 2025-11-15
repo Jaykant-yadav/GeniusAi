@@ -176,7 +176,7 @@ export const generateImage = async (req, res) => {
 export const removeImageBackground = async (req, res) => {
     try {
         const { userId } = await req.auth();
-        const { image } = req.file;
+        const  image  = req.file;
         const plan = req.plan;
 
         // 1️ Check plan
@@ -225,8 +225,8 @@ export const removeImageBackground = async (req, res) => {
 export const removeImageObject = async (req, res) => {
     try {
         const { userId } = await req.auth();
-        const { object } = req.body;
-        const { image } = req.file;
+        const  targetRaw  = req.body.target;
+        const  image  = req.file;
         const plan = req.plan;
 
         // 1️ Check plan
@@ -239,16 +239,17 @@ export const removeImageObject = async (req, res) => {
 
         // 2 Upload to Cloudinary
         const { public_id } = await cloudinary.uploader.upload(image.path);
-
+        const target = String(targetRaw).trim().split(/\s+/)[0];
         const imageUrl = cloudinary.url(public_id, {
-            transformation: [{ effect: `gen_remove:${object}` }],
-            resource_type: 'image'
+            transformation: [{ effect: `gen_remove:${target}` }],
+            resource_type: 'image',
+            folder: "geniusai/removals"
         })
 
         // 3 Save in DB
         const savedDoc = await Creation.create({
             userId,
-            prompt: `Remove ${object} from image`,
+            prompt: `Remove ${target} from image`,
             content: imageUrl,
             type: "image",
         });
