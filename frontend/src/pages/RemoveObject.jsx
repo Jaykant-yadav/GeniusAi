@@ -25,9 +25,9 @@ function RemoveObject() {
 
       const formData = new FormData()
       formData.append('image', input)
-      formData.append('object', object)
+      formData.append('target', object)
 
-      const { data } = await axios.post('/api/ai/remove-image-object', formData, { headers: { Authorization: `Bearer ${await getToken()}`}})
+      const { data } = await axios.post('/api/ai/remove-image-object', formData, { headers: { Authorization: `Bearer ${await getToken()}` } })
       if (data.success) {
         setContent(data.content)
       } else {
@@ -68,18 +68,20 @@ function RemoveObject() {
           <h1 className='text-xl font-semibold'>Processed Image</h1>
         </div>
 
-        {!loading ? (
+        {loading ? (
+          <div className='flex-1 flex justify-center items-center'>
+            <span className='w-6 h-6 border-2 border-t-transparent rounded-full animate-spin'></span>
+          </div>
+        ) : content ? (
+          <img src={content} alt="image" className='mt-3 w-full h-full rounded-lg object-contain' />
+        ) : (
           <div className='flex-1 flex justify-center items-center'>
             <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
               <Scissors className='w-9 h-9' />
               <p>Upload an image and click "Remove object" to get started</p>
             </div>
           </div>
-        ) : (
-            <img src={content} alt="image" className='mt-3 w-full h-full'/>
         )}
-
-
       </div>
     </div>
   )
