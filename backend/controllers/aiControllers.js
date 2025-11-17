@@ -5,7 +5,6 @@ import Creation from '../models/Creations.js';
 import { v2 as cloudinary } from 'cloudinary';
 import FormData from 'form-data'
 import fs from 'fs';
-import { PDFDocument } from "pdf-lib";
 
 const AI = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,

@@ -23,27 +23,31 @@ export const toggleLikeCreation = async (req, res) => {
     try {
         const { userId } = req.auth();
         const { id } = req.body;
-        const [creations] = await Creation.find({ id });
+        const creation = await Creation.findById(id);
 
-        if (!creations) {
+        if (!creation) {
             return res.json({ success: false, message: "Creation not found" })
         }
 
-        const currentLikes = creations.likes;
         const userIdStr = userId.toString();
         let updatedLikes;
         let message;
 
-        if (currentLikes.includes(userIdStr)) {
-            updatedLikes = currentLikes.filter((user) => user !== userIdStr);
-            message = 'Creation unliked'
+        if (creation.likes.includes(userIdStr)) {
+            // Unlike
+            updatedLikes = creation.likes.filter(uid => uid !== userIdStr);
+            message = "Creation unliked";
         } else {
-            updatedLikes = [...currentLikes, userIdStr]
-            message = 'Creation Liked'
+            // Like
+            updatedLikes = [...creation.likes, userIdStr];
+            message = "Creation liked";
         }
 
-
-        await Creation.findByIdAndUpdate(id, { likes }, { new: true });
+        await Creation.findByIdAndUpdate(
+            id,
+            { likes: updatedLikes, updatedAt: Date.now() },
+            { new: true }
+        );
 
         res.json({ success: true, message });
     } catch (error) {
